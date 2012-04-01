@@ -2,47 +2,41 @@
 
 A utility module for asynchronous javascript on the client and the server. Async uses promises to mitigate the **"Pyramid of Doom"** effect.
 
-Turn this (example sourced from [q]: (http://github.com/kriskowal/q)):
-```javascript
-step1(function (value1) {
-    step2(value1, function(value2) {
-        step3(value2, function(value3) {
-            step4(value3, function(value4) {
-                // Do something with result of step4
+Turn this (example sourced from [q](http://github.com/kriskowal/q)):
+    step1(function (value1) {
+        step2(value1, function(value2) {
+            step3(value2, function(value3) {
+                step4(value3, function(value4) {
+                    // Do something with result of step4
+                });
             });
         });
     });
-});
-```
 
 Into this:
-```javascript
-async.call(step01(value1))
-.then(step2)
-.then(step3)
-.then(step4)
-.then(function (result) {
-    // Do something with result of step 4
-}, function (error) {
-    // Handle any error from step 1 to step 4
-});
-```
+    async.call(step01(value1))
+    .then(step2)
+    .then(step3)
+    .then(step4)
+    .then(function (result) {
+        // Do something with result of step 4
+    }, function (error) {
+        // Handle any error from step 1 to step 4
+    });
 
 Or this:
-```javascript
-async.series([
-    step1(value1),
-    step2,
-    step3,
-    step4
-])
-.then(function (results) {
-    var result_of_step4 = results[3];
-    // Do something with result of step 4
-}, function (error) {
-    // Handle any error from step 1 to step 4
-});
-```
+    async.series([
+        step1(value1),
+        step2,
+        step3,
+        step4
+    ])
+    .then(function (results) {
+        var result_of_step4 = results[3];
+        // Do something with result of step 4
+    }, function (error) {
+        // Handle any error from step 1 to step 4
+    });
 
 ### Utilities include:
 * Asynchronous functional operations on collections (forEach, map, filter…).
