@@ -91,15 +91,22 @@
     }
 
     Then.prototype["do"] = function(type, value) {
-      var callbacks, deferred, result;
+      var callback, callbacks, deferred, result;
       deferred = this.deferred;
       callbacks = this._callbacks;
       try {
-        result = callbacks[type](value);
+        callback = callbacks[type];
+        if (!callback) return deferred.reject(value);
+        result = callback(value);
         if (result instanceof Promise) {
           return result.then(deferred.resolve, deferred.reject);
         } else {
-          return deferred.resolve(result);
+          switch (type) {
+            case type === "resolve":
+              return deferred.resolve(result);
+            case type === "reject":
+              return deferred.reject(result);
+          }
         }
       } catch (error) {
         return deferred.reject(error);

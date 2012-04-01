@@ -59,11 +59,15 @@ class Then
     deferred = @deferred
     callbacks = @_callbacks
     try
-      result = callbacks[type] value
+      callback = callbacks[type]
+      return deferred.reject value if !callback
+      result = callback value
       if result instanceof Promise
         result.then deferred.resolve, deferred.reject
       else
-        deferred.resolve result
+        switch type
+          when type is "resolve" then deferred.resolve result
+          when type is "reject" then deferred.reject result
     catch error
       deferred.reject error
 

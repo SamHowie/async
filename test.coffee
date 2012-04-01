@@ -75,6 +75,55 @@ isEven = (value) ->
   )
   return deferred.promise
 
+step1 = (value) ->
+  deferred = async.defer()
+  setTimeout(
+    () ->
+      value.push('step1')
+      deferred.resolve value
+    , 500
+  )
+  return deferred.promise
+
+step2 = (value) ->
+  deferred = async.defer()
+  setTimeout(
+    () ->
+      value.push('step2')
+      deferred.resolve value
+    , 500
+  )
+  return deferred.promise
+
+step3 = (value) ->
+  deferred = async.defer()
+  setTimeout(
+    () ->
+      value.push('step3')
+      deferred.resolve value
+    , 500
+  )
+  return deferred.promise
+
+step4 = (value) ->
+  deferred = async.defer()
+  setTimeout(
+    () ->
+      value.push('step4')
+      deferred.resolve value
+    , 500
+  )
+  return deferred.promise
+
+step_fail = (value) ->
+  deferred = async.defer()
+  setTimeout(
+    () ->
+      value.push('rejected!')
+      deferred.reject value
+    , 500
+  )
+  return deferred.promise
 
 # ------------------------------------------------------------------------------------------ SERIES TESTS
 # Series - ascync steps
@@ -178,4 +227,44 @@ async.detectSeries([1,"apples",3,4], isEven)
 async.detectSeries([2,"apples",3,4], isEven)
   .then(((result) -> console.log result), ((err) -> console.log err))
 
+# ------------------------------------------------------------------------------- GITHUB EXAMPLES TESTS
+async.call(step1([]))
+.then(step2)
+.then(step3)
+.then(step4)
+.then(
+  (result) -> console.log result,
+  (error) -> console.log error
+)
+
+async.call(step1([]))
+.then(step2)
+.then(step_fail)
+.then(step4)
+.then(
+  (result) -> console.log result,
+  (error) -> console.log error
+)
+
+async.series([
+    step1([]),
+    step2,
+    step3,
+    step4
+])
+.then(
+  (results) -> console.log results[3],
+  (error) -> console.log error
+);
+
+async.series([
+    step1([]),
+    step_fail,
+    step3,
+    step4
+])
+.then(
+  (results) -> console.log results[3],
+  (error) -> console.log error
+);
 

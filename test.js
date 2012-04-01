@@ -1,5 +1,5 @@
 (function() {
-  var async, double, isEven, task_01, task_02, task_03, task_04, task_fail, task_with_value;
+  var async, double, isEven, step1, step2, step3, step4, step_fail, task_01, task_02, task_03, task_04, task_fail, task_with_value;
 
   async = require("./async");
 
@@ -74,6 +74,56 @@
       var result;
       if (typeof value === 'string') return deferred.reject('successful failure');
       return deferred.resolve(result = (value % 2 === 0 ? true : false));
+    }, 500);
+    return deferred.promise;
+  };
+
+  step1 = function(value) {
+    var deferred;
+    deferred = async.defer();
+    setTimeout(function() {
+      value.push('step1');
+      return deferred.resolve(value);
+    }, 500);
+    return deferred.promise;
+  };
+
+  step2 = function(value) {
+    var deferred;
+    deferred = async.defer();
+    setTimeout(function() {
+      value.push('step2');
+      return deferred.resolve(value);
+    }, 500);
+    return deferred.promise;
+  };
+
+  step3 = function(value) {
+    var deferred;
+    deferred = async.defer();
+    setTimeout(function() {
+      value.push('step3');
+      return deferred.resolve(value);
+    }, 500);
+    return deferred.promise;
+  };
+
+  step4 = function(value) {
+    var deferred;
+    deferred = async.defer();
+    setTimeout(function() {
+      value.push('step4');
+      return deferred.resolve(value);
+    }, 500);
+    return deferred.promise;
+  };
+
+  step_fail = function(value) {
+    var deferred;
+    deferred = async.defer();
+    setTimeout(function() {
+      value.push('rejected!');
+      return deferred.reject(value);
     }, 500);
     return deferred.promise;
   };
@@ -273,5 +323,29 @@
   }), (function(err) {
     return console.log(err);
   }));
+
+  async.call(step1([])).then(step2).then(step3).then(step4).then(function(result) {
+    return console.log(result);
+  }, function(error) {
+    return console.log(error);
+  });
+
+  async.call(step1([])).then(step2).then(step_fail).then(step4).then(function(result) {
+    return console.log(result);
+  }, function(error) {
+    return console.log(error);
+  });
+
+  async.series([step1([]), step2, step3, step4]).then(function(results) {
+    return console.log(results[3]);
+  }, function(error) {
+    return console.log(error);
+  });
+
+  async.series([step1([]), step_fail, step3, step4]).then(function(results) {
+    return console.log(results[3]);
+  }, function(error) {
+    return console.log(error);
+  });
 
 }).call(this);
