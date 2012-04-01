@@ -3,6 +3,7 @@
 A utility module for asynchronous javascript on the client and the server. Async uses promises to mitigate the **"Pyramid of Doom"** effect.
 
 Turn this (example sourced from [q](http://github.com/kriskowal/q)):
+
     step1(function (value1) {
         step2(value1, function(value2) {
             step3(value2, function(value3) {
@@ -14,6 +15,7 @@ Turn this (example sourced from [q](http://github.com/kriskowal/q)):
     });
 
 Into this:
+
     async.call(step01(value1))
     .then(step2)
     .then(step3)
@@ -25,6 +27,7 @@ Into this:
     });
 
 Or this:
+
     async.series([
         step1(value1),
         step2,
