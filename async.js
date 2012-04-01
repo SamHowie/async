@@ -1,33 +1,39 @@
 (function() {
-  var Deferred, Promise, async,
+  var Deferred, Promise, Then, async, toType,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+  toType = function(object) {
+    var result;
+    if (object === null) {
+      return result = "null";
+    } else if (object === void 0) {
+      return result = "undefined";
+    } else {
+      return result = Object.prototype.toString.call(object).slice(8, -1);
+    }
+  };
 
   Deferred = (function() {
 
     function Deferred() {
-      this.progress = __bind(this.progress, this);
       this.reject = __bind(this.reject, this);
-      this.resolve = __bind(this.resolve, this);      this.promise = new Promise(this);
-      this._pending = [];
+      this.resolve = __bind(this.resolve, this);
+      this.setThen = __bind(this.setThen, this);      this.promise = new Promise(this);
       this._fulfillment = void 0;
+      this._then = void 0;
     }
 
-    Deferred.prototype.append = function(success, failure, progress) {
-      var callback, fulfillment, _name;
-      fulfillment = this._fulfillment;
-      callback = {
-        resolve: success,
-        reject: failure,
-        progress: progress
-      };
-      if (this._fulfillment && this._fulfillment.result instanceof Promise === false) {
-        if (typeof callback[_name = fulfillment.type] === "function") {
-          callback[_name](fulfillment.result);
-        }
-        return this;
+    Deferred.prototype.isFulfilled = function() {
+      return this._fulfillment != null;
+    };
+
+    Deferred.prototype.setThen = function(success, failure) {
+      var fulfillment, _then;
+      _then = this._then = new Then(success, failure);
+      if (fulfillment = this._fulfillment) {
+        _then["do"](fulfillment.type, fulfillment.result);
       }
-      this._pending.push(callback);
-      return this;
+      return _then.promise;
     };
 
     Deferred.prototype.resolve = function(result) {
@@ -38,41 +44,17 @@
       return this._fulfill('reject', result);
     };
 
-    Deferred.prototype.progress = function(result) {
-      var callback, _i, _len, _results;
-      if (fulfillment) {
-        if (typeof console !== "undefined" && console !== null) {
-          console.logWarning('Deferred::complete(result): Attempting to progressback a promise that has been fulfilled.');
-        }
-        return;
-      }
-      _results = [];
-      for (_i = 0, _len = pending.length; _i < _len; _i++) {
-        callback = pending[_i];
-        if (callback["progress"] != null) {
-          _results.push(callback["progress"](result));
-        }
-      }
-      return _results;
-    };
-
     Deferred.prototype._fulfill = function(type, result) {
-      var callback, pending;
+      var fulfillment, _then;
       if (this._fulfillment) {
         return typeof console !== "undefined" && console !== null ? typeof console.logWarning === "function" ? console.logWarning('Deferred::fulfill(type, result): Attempting to fulfill a promise that has already been fulfilled. Fulfillment ignored.') : void 0 : void 0;
       }
-      if (result instanceof Promise) {
-        return result.then(this.resolve, this.reject, this.progress);
-      }
-      this._fulfillment = {
+      if (result instanceof Promise) return result.then(this.resolve, this.reject);
+      fulfillment = this._fulfillment = {
         type: type,
         result: result
       };
-      pending = this._pending;
-      while (pending[0]) {
-        callback = pending.shift()[type];
-        if (typeof callback === 'function') callback(result);
-      }
+      if (_then = this._then) return _then["do"](type, result);
     };
 
     return Deferred;
@@ -82,20 +64,71 @@
   Promise = (function() {
 
     function Promise(deferred) {
+      if (deferred instanceof Deferred === false) {
+        throw "Promise::constructor(deferred): deferred paramter must be defined and of type Deferred.";
+      }
       this._deferred = deferred;
+      this.isPromise = true;
     }
 
-    Promise.prototype.then = function(success, failure, progress) {
-      if (this._deferred === void 0) return this;
-      this._deferred.append(success, failure, progress);
-      return this;
+    Promise.prototype.then = function(success, failure) {
+      return this._deferred.setThen(success, failure);
     };
 
     return Promise;
 
   })();
 
+  Then = (function() {
+
+    function Then(success, failure) {
+      this.deferred = new Deferred();
+      this.promise = this.deferred.promise;
+      this._callbacks = {
+        resolve: success,
+        reject: failure
+      };
+    }
+
+    Then.prototype["do"] = function(type, value) {
+      var callbacks, deferred, result;
+      deferred = this.deferred;
+      callbacks = this._callbacks;
+      try {
+        result = callbacks[type](value);
+        if (result instanceof Promise) {
+          return result.then(deferred.resolve, deferred.reject);
+        } else {
+          return deferred.resolve(result);
+        }
+      } catch (error) {
+        return deferred.reject(error);
+      }
+    };
+
+    return Then;
+
+  })();
+
   async = {
+    call: function(value, context, args) {
+      var deferred;
+      deferred = new Deferred();
+      try {
+        if (value.then) {
+          if (value instanceof Promise) return value;
+          value.then(deferred.resolve, deferred.reject);
+        } else {
+          if (toType(value) === "Function") {
+            value = value.apply(context || {}, args || []);
+          }
+          deferred.resolve(value);
+        }
+      } catch (error) {
+        deferred.reject(error);
+      }
+      return deferred.promise;
+    },
     defer: function() {
       return new Deferred();
     },
@@ -113,64 +146,254 @@
       };
     },
     forEach: function(array, func) {
-      var deferred, funcIsPromise, item, numItems, onFuncComplete, promise, returnedItems, _i, _len;
+      var applyFunction, deferred, i, item, _len;
       deferred = async.defer();
-      numItems = array.length;
-      returnedItems = 0;
-      funcIsPromise = void 0;
-      onFuncComplete = function() {
-        returnedItems += 1;
-        if (returnedItems === numItems) return deferred.resolve();
+      applyFunction = function(item) {
+        return function() {
+          return func(item);
+        };
+      };
+      for (i = 0, _len = array.length; i < _len; i++) {
+        item = array[i];
+        array[i] = applyFunction(item);
+      }
+      async.parallel(array).then(deferred.resolve, deferred.reject);
+      return deferred.promise;
+    },
+    forEachSeries: function(array, func) {
+      var applyFunction, deferred, i, item, _len;
+      deferred = async.defer();
+      applyFunction = function(item) {
+        return function() {
+          return func(item);
+        };
+      };
+      for (i = 0, _len = array.length; i < _len; i++) {
+        item = array[i];
+        array[i] = applyFunction(item);
+      }
+      async.series(array).then(deferred.resolve, deferred.reject);
+      return deferred.promise;
+    },
+    map: function(array, func) {
+      var applyFunction, deferred, i, item, _len;
+      deferred = async.defer();
+      applyFunction = function(item) {
+        return function() {
+          return func(item);
+        };
+      };
+      for (i = 0, _len = array.length; i < _len; i++) {
+        item = array[i];
+        array[i] = applyFunction(item);
+      }
+      async.parallel(array).then(deferred.resolve, deferred.reject);
+      return deferred.promise;
+    },
+    mapSeries: function(array, func) {
+      var applyFunction, deferred, i, item, _len;
+      deferred = async.defer();
+      applyFunction = function(item) {
+        return function() {
+          return func(item);
+        };
+      };
+      for (i = 0, _len = array.length; i < _len; i++) {
+        item = array[i];
+        array[i] = applyFunction(item);
+      }
+      async.series(array).then(deferred.resolve, deferred.reject);
+      return deferred.promise;
+    },
+    filter: function(array, func) {
+      var applyFunction, deferred, filterResults, i, item, tasks, _len,
+        _this = this;
+      deferred = async.defer();
+      tasks = [];
+      applyFunction = function(item) {
+        return function() {
+          return func(item);
+        };
+      };
+      filterResults = function(results) {
+        var filtered, i, result, _len;
+        filtered = [];
+        for (i = 0, _len = results.length; i < _len; i++) {
+          result = results[i];
+          if (result) filtered.push(array[i]);
+        }
+        return deferred.resolve(filtered);
+      };
+      for (i = 0, _len = array.length; i < _len; i++) {
+        item = array[i];
+        tasks.push(applyFunction(item));
+      }
+      async.parallel(tasks).then(filterResults, deferred.reject);
+      return deferred.promise;
+    },
+    filterSeries: function(array, func) {
+      var applyFunction, deferred, filterResults, i, item, tasks, _len,
+        _this = this;
+      deferred = async.defer();
+      tasks = [];
+      applyFunction = function(item) {
+        return function() {
+          return func(item);
+        };
+      };
+      filterResults = function(results) {
+        var filtered, i, result, _len;
+        filtered = [];
+        for (i = 0, _len = results.length; i < _len; i++) {
+          result = results[i];
+          if (result) filtered.push(array[i]);
+        }
+        return deferred.resolve(filtered);
+      };
+      for (i = 0, _len = array.length; i < _len; i++) {
+        item = array[i];
+        tasks.push(applyFunction(item));
+      }
+      async.series(tasks).then(filterResults, deferred.reject);
+      return deferred.promise;
+    },
+    reject: function(array, func) {
+      var applyFunction, deferred, filterResults, i, item, tasks, _len,
+        _this = this;
+      deferred = async.defer();
+      tasks = [];
+      applyFunction = function(item) {
+        return function() {
+          return func(item);
+        };
+      };
+      filterResults = function(results) {
+        var filtered, i, result, _len;
+        filtered = [];
+        for (i = 0, _len = results.length; i < _len; i++) {
+          result = results[i];
+          if (!result) filtered.push(array[i]);
+        }
+        return deferred.resolve(filtered);
+      };
+      for (i = 0, _len = array.length; i < _len; i++) {
+        item = array[i];
+        tasks.push(applyFunction(item));
+      }
+      async.parallel(tasks).then(filterResults, deferred.reject);
+      return deferred.promise;
+    },
+    rejectSeries: function(array, func) {
+      var applyFunction, deferred, filterResults, i, item, tasks, _len,
+        _this = this;
+      deferred = async.defer();
+      tasks = [];
+      applyFunction = function(item) {
+        return function() {
+          return func(item);
+        };
+      };
+      filterResults = function(results) {
+        var filtered, i, result, _len;
+        filtered = [];
+        for (i = 0, _len = results.length; i < _len; i++) {
+          result = results[i];
+          if (!result) filtered.push(array[i]);
+        }
+        return deferred.resolve(filtered);
+      };
+      for (i = 0, _len = array.length; i < _len; i++) {
+        item = array[i];
+        tasks.push(applyFunction(item));
+      }
+      async.series(tasks).then(filterResults, deferred.reject);
+      return deferred.promise;
+    },
+    detect: function(array, func) {
+      var deferred, item, resolveCallback, result, tasks, _i, _len;
+      deferred = async.defer();
+      tasks = [];
+      resolveCallback = function(item) {
+        return function(result) {
+          if (deferred.isFulfilled()) return;
+          if (result) return deferred.resolve(item);
+        };
       };
       for (_i = 0, _len = array.length; _i < _len; _i++) {
         item = array[_i];
-        promise = func(item);
-        if (funcIsPromise === void 0) funcIsPromise = promise instanceof Promise;
-        if (funcIsPromise) {
-          promise.then(onFuncComplete);
-        } else {
-          onFuncComplete();
+        if (deferred.isFulfilled()) break;
+        try {
+          result = func(item);
+          if (result instanceof Promise) {
+            result.then(resolveCallback(item), deferred.reject);
+          } else {
+            resolveCallback(item)(result);
+          }
+        } catch (error) {
+          deferred.reject(error);
         }
       }
       return deferred.promise;
     },
-    forEachSeries: function(array, func) {
-      var currentIndex, deferred, doStep, funcIsPromise, numItems, onFuncComplete;
+    detectSeries: function(array, func) {
+      var currentIndex, deferred, doStep, resolveCallback;
       deferred = async.defer();
-      numItems = array.length;
       currentIndex = 0;
-      funcIsPromise = void 0;
-      onFuncComplete = function() {
-        currentIndex++;
-        if (currentIndex === numItems) return deferred.resolve();
-        return doStep(currentIndex);
+      resolveCallback = function(result) {
+        if (result) {
+          return deferred.resolve(array[currentIndex]);
+        } else {
+          currentIndex += 1;
+          if (currentIndex === array.length) return deferred.resolve(void 0);
+          return doStep(currentIndex);
+        }
       };
       doStep = function(index) {
-        var item, promise;
-        item = array[index];
-        promise = func(item);
-        if (funcIsPromise === void 0) funcIsPromise = promise instanceof Promise;
-        if (funcIsPromise) {
-          return promise.then(onFuncComplete);
-        } else {
-          return onFuncComplete();
-        }
+        return async.call(func(array[index])).then(resolveCallback, deferred.reject);
       };
       doStep(currentIndex);
       return deferred.promise;
     },
-    map: function(array, func) {
-      var addResult, deferred, funcIsPromise, i, item, numToMap, results, _fn, _len;
-      deferred = async.defer();
-      numToMap = array.length;
-      funcIsPromise = void 0;
+    series: function(tasks, options) {
+      var deferred, failCallback, failed, promise, resolveCallback, results, task, _i, _len;
       results = [];
-      addResult = function(result, index) {
-        var i, resultsLength, _results;
-        resultsLength = results.length;
-        if (index >= resultsLength) {
+      deferred = new Deferred();
+      failed = false;
+      resolveCallback = function(func) {
+        return function(result) {
+          results.push(result);
+          if (func === void 0) deferred.resolve(results);
+          return func(result);
+        };
+      };
+      failCallback = function(err) {
+        if (failed) return;
+        failed = true;
+        return deferred.reject(err);
+      };
+      try {
+        options = options || {};
+        promise = async.call(tasks.shift(), options.context || {}, options.arguments || []);
+      } catch (error) {
+        failCallback(error);
+      }
+      for (_i = 0, _len = tasks.length; _i < _len; _i++) {
+        task = tasks[_i];
+        promise = promise.then(resolveCallback(task), failCallback);
+      }
+      promise.then(resolveCallback(), failCallback);
+      return deferred.promise;
+    },
+    parallel: function(tasks, options) {
+      var addResult, deferred, failCallback, i, resolveCallback, result, results, task, tasksComplete, _len;
+      results = [];
+      deferred = new Deferred();
+      tasksComplete = 0;
+      addResult = function(index, result) {
+        var i, _ref, _results;
+        if (index >= results.length) {
           _results = [];
-          for (i = resultsLength; i <= index; i += 1) {
+          for (i = _ref = results.length; i <= index; i += 1) {
             if (i !== index) {
               _results.push(results.push(void 0));
             } else {
@@ -182,51 +405,32 @@
           return results[index] = result;
         }
       };
-      _fn = function(item, i) {
-        var onFuncComplete, result;
-        onFuncComplete = function(result) {
-          addResult(result, i);
-          if (results.length === numToMap) return deferred.resolve(results);
+      resolveCallback = function(i) {
+        return function(result) {
+          if (deferred.isFulfilled()) return;
+          addResult(i, result);
+          tasksComplete++;
+          if (tasksComplete === tasks.length) return deferred.resolve(results);
         };
-        result = func(item);
-        if (funcIsPromise === void 0) funcIsPromise = result instanceof Promise;
-        if (funcIsPromise) {
-          return result.then(onFuncComplete, onFuncComplete);
-        } else {
-          return onFuncComplete(result);
-        }
       };
-      for (i = 0, _len = array.length; i < _len; i++) {
-        item = array[i];
-        _fn(item, i);
+      failCallback = function(err) {
+        if (deferred.isFulfilled()) return;
+        return deferred.reject(err);
+      };
+      for (i = 0, _len = tasks.length; i < _len; i++) {
+        task = tasks[i];
+        if (deferred.isFulfilled()) break;
+        try {
+          result = task();
+          if (result instanceof Promise) {
+            result.then(resolveCallback(i), failCallback);
+          } else {
+            resolveCallback(i)(result);
+          }
+        } catch (error) {
+          failCallback(error);
+        }
       }
-      return deferred.promise;
-    },
-    mapSeries: function(array, func) {
-      var currentIndex, deferred, doStep, funcIsPromise, numToMap, onFuncComplete, results;
-      deferred = async.defer();
-      numToMap = array.length;
-      currentIndex = 0;
-      funcIsPromise = void 0;
-      results = [];
-      onFuncComplete = function(result) {
-        currentIndex++;
-        results.push(result);
-        if (currentIndex === numToMap) return deferred.resolve(results);
-        return doStep(currentIndex);
-      };
-      doStep = function(index) {
-        var item, result;
-        item = array[index];
-        result = func(item);
-        if (funcIsPromise === void 0) funcIsPromise = result instanceof Promise;
-        if (funcIsPromise) {
-          return result.then(onFuncComplete);
-        } else {
-          return onFuncComplete(result);
-        }
-      };
-      doStep(currentIndex);
       return deferred.promise;
     }
   };
