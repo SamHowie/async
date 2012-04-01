@@ -2,8 +2,8 @@
 
 A utility module for asynchronous javascript on the client and the server. Async uses promises to mitigate the **"Pyramid of Doom"** effect.
 
-Turn this (example sourced from [q]:(https://github.com/kriskowal/q)):
-'''javascript
+Turn this (example sourced from [q]:(http://github.com/kriskowal/q)):
+```javascript
 step1(function (value1) {
     step2(value1, function(value2) {
         step3(value2, function(value3) {
@@ -13,10 +13,10 @@ step1(function (value1) {
         });
     });
 });
-'''
+```
 
 Into this:
-'''javascript
+```javascript
 async.call(step01(value1))
 .then(step2)
 .then(step3)
@@ -26,10 +26,10 @@ async.call(step01(value1))
 }, function (error) {
 	// Handle any error from step 1 to step 4
 });
-'''
+```
 
 Or this:
-'''javascript
+```javascript
 async.series([
 	step1(value1),
 	step2,
@@ -42,7 +42,7 @@ async.series([
 }, function (error) {
 	// Handle any error from step 1 to step 4
 });
-'''
+```
 
 ### Utilities include:
 * Asynchronous functional operations on collections (forEach, map, filter…).
