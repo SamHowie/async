@@ -2,7 +2,7 @@
 
 A utility module for asynchronous javascript on the client and the server. Async uses promises to mitigate the **"Pyramid of Doom"** effect.
 
-Turn this (example sourced from [q]:(http://github.com/kriskowal/q)):
+Turn this (example sourced from [q]: http://github.com/kriskowal/q):
 ```javascript
 step1(function (value1) {
     step2(value1, function(value2) {
