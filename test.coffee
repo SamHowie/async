@@ -283,7 +283,7 @@ var fs      = require('fs'),
 readdir("./")
 .then(function(files) {
     var deferred = async.defer();
-    async.mapSeries(files, function(file) {
+    async.map(files, function(file) {
         var deferred = async.defer();
         stat(file)
         .then(function(stats) {
