@@ -2,6 +2,8 @@
 
 A utility module for asynchronous javascript on the client and the server. Async uses promises to mitigate the **"Pyramid of Doom"** effect.
 
+Inspired by Caolan McMahon's [async](https://github.com/caolan/async) and Kristopher Michael Kowal's [q](http://github.com/kriskowal/q).
+
 Turn this (example sourced from [q](http://github.com/kriskowal/q)):
 
     step1(function (value1) {
