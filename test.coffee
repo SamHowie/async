@@ -273,4 +273,33 @@ async.series([
 async.call(((x) -> x * 2), undefined, 2)
 .then((result) -> console.log result)
 
+`
+// Promisify nodejs fs.readdir and fs.stats
+// Use these promises to print a list of file data for files in current directory.
+var fs      = require('fs'),
+    readdir = async.promisifyNode(fs.readdir),
+    stat    = async.promisifyNode(fs.stat);
 
+readdir("./")
+.then(function(files) {
+    var deferred = async.defer();
+    async.mapSeries(files, function(file) {
+        var deferred = async.defer();
+        stat(file)
+        .then(function(stats) {
+            deferred.resolve("The file " + file + " is " + stats.size + " bytes.");
+        });
+        return deferred.promise;
+    })
+    .then(function(results) {
+        deferred.resolve(results);
+    });
+    return deferred.promise;
+})
+.then(function(results){
+    var i;
+    for (i = 0; i < results.length; i++) {
+        console.log(results[i]);
+    }
+});
+`

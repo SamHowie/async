@@ -79,7 +79,7 @@ Returns a deferred object for creating custom async tasks.
 
     // This example shows how a deferred object can be used to create an async task.
     // Upon execution of the task, a promise is returned. 
-    // The task performs an asynchronous wait of 500 milliseconds before resolving the promise.
+    // The task performs an asynchronous wait of 500 milliseconds before fulfilling the promise.
 
     asyncTask = function() {
         var deferred = async.defer();
@@ -95,9 +95,8 @@ Returns a deferred object for creating custom async tasks.
 Takes a synchronous function and returns a promise of its return value.
 
     async.call(function(x){return x * 2;}, undefined, 2)
-    .then(
-        function(result){
-            console.log(result); // 4
+    .then(function(result) {
+        console.log(result); // 4
     });
 
 <a name="promisify" />
@@ -105,10 +104,67 @@ Takes a synchronous function and returns a promise of its return value.
 
 Takes a value and converts it into a promise.
 
-<a name="promisifyNodeJS" />
-### promisifyNodeJS(nodeAsyncFunction, context)
+If value is a promise, the promise is simply returned.
 
-Takes a value and converts it into a promise.
+If value is a function, the function is executed and the result is converted.
+
+Note: Asynchronous functions are not supported. If you want to promisfy an asynchronous function written in nodejs callback style please use promisifyNode
+
+    // Promisify a string.
+    async.promisify("peanut butter")
+    .then(function(result) {
+        console.log(result); // Peanut Butter
+    });
+
+    // Promisify an object.
+    async.promisify({spread: "vegemite"})
+    .then(function(result) {
+        console.log(result.spread); // vegemite
+    });
+
+    // Promisify a function.
+    async.promisify(function(){return "Honey"})
+    .then(function(result) {
+        console.log(result); // Honey
+    });
+
+<a name="promisifyNode" />
+### promisifyNodeJS(asyncFunction, context)
+
+Takes a node style asynchronous function and converts it into a function that returns a promise.
+
+asyncFunction   - A node style asynchronous function
+context         - The context of the asynchronous function (defaults to {})
+
+    // Promisify nodejs fs.readdir and fs.stats
+    // Use these promisified tasks to print a list of file data for files in the current directory.
+    var fs      = require('fs'),
+        readdir = async.promisifyNode(fs.readdir),
+        stat    = async.promisifyNode(fs.stat);
+
+    readdir("./")
+    .then(function(files) {
+        var deferred = async.defer();
+        async.mapSeries(files, function(file) {
+            var deferred = async.defer();
+            stat(file)
+            .then(function(stats) {
+                deferred.resolve("The file " + file + " is " + stats.size + " bytes.");
+            });
+            return deferred.promise;
+        })
+        .then(function(results) {
+            deferred.resolve(results);
+        });
+        return deferred.promise;
+    })
+    .then(function(results){
+        var i;
+        for (i = 0; i < results.length; i++) {
+            console.log(results[i]);
+        }
+    });
+
 
 ## Functional Operations
 

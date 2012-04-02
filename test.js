@@ -322,50 +322,65 @@
     return console.log(err);
   }));
 
-  /*
-  # ------------------------------------------------------------------------------- GITHUB EXAMPLES TESTS
-  async.call(step1, undefined, [])
-  .then(step2)
-  .then(step3)
-  .then(step4)
-  .then(
-    (result) -> console.log result,
-    (error) -> console.log error
-  )
+  async.call(step1, void 0, []).then(step2).then(step3).then(step4).then(function(result) {
+    return console.log(result);
+  }, function(error) {
+    return console.log(error);
+  });
+
+  async.call(step1, void 0, []).then(step2).then(step_fail).then(step4).then(function(result) {
+    return console.log(result);
+  }, function(error) {
+    return console.log(error);
+  });
+
+  async.series([step1([]), step2, step3, step4]).then(function(results) {
+    return console.log(results[3]);
+  }, function(error) {
+    return console.log(error);
+  });
+
+  async.series([step1([]), step_fail, step3, step4]).then(function(results) {
+    return console.log(results[3]);
+  }, function(error) {
+    return console.log(error);
+  });
+
+  async.call((function(x) {
+    return x * 2;
+  }), void 0, 2).then(function(result) {
+    return console.log(result);
+  });
+
   
-  async.call(step1, undefined, [])
-  .then(step2)
-  .then(step_fail)
-  .then(step4)
-  .then(
-    (result) -> console.log result,
-    (error) -> console.log error
-  )
-  
-  async.series([
-      step1([]),
-      step2,
-      step3,
-      step4
-  ])
-  .then(
-    (results) -> console.log results[3],
-    (error) -> console.log error
-  );
-  
-  async.series([
-      step1([]),
-      step_fail,
-      step3,
-      step4
-  ])
-  .then(
-    (results) -> console.log results[3],
-    (error) -> console.log error
-  );
-  
-  async.call(((x) -> x * 2), undefined, 2)
-  .then((result) -> console.log result)
-  */
+// Promisify nodejs fs.readdir and fs.stats
+// Use these promises to print a list of file data for files in current directory.
+var fs      = require('fs'),
+    readdir = async.promisifyNode(fs.readdir),
+    stat    = async.promisifyNode(fs.stat);
+
+readdir("./")
+.then(function(files) {
+    var deferred = async.defer();
+    async.mapSeries(files, function(file) {
+        var deferred = async.defer();
+        stat(file)
+        .then(function(stats) {
+            deferred.resolve("The file " + file + " is " + stats.size + " bytes.");
+        });
+        return deferred.promise;
+    })
+    .then(function(results) {
+        deferred.resolve(results);
+    });
+    return deferred.promise;
+})
+.then(function(results){
+    var i;
+    for (i = 0; i < results.length; i++) {
+        console.log(results[i]);
+    }
+});
+;
 
 }).call(this);
