@@ -55,7 +55,7 @@ Or this:
 * [defer](#defer)
 * [call](#call)
 * [promisify](#promisify)
-* [promisifyNodeJS](#promisifyNodeJS)
+* [promisifyNode](#promisifyNode)
 
 ### Functional Operations
 
@@ -129,7 +129,7 @@ Note: Asynchronous functions are not supported. If you want to promisfy an async
     });
 
 <a name="promisifyNode" />
-### promisifyNodeJS(asyncFunction, context)
+### promisifyNode(asyncFunction, context)
 
 Takes a node style asynchronous function and converts it into a function that returns a promise.
 
