@@ -131,57 +131,61 @@ async =
   # returns promise
   forEach: (array, func) ->
     deferred      = async.defer()
+    tasks         = []
 
     applyFunction = (item) ->
       return ->
         func item
 
     for item, i in array
-      array[i] = applyFunction item
+      tasks.push(applyFunction item)
 
-    async.parallel(array).then deferred.resolve, deferred.reject
+    async.parallel(tasks).then deferred.resolve, deferred.reject
 
     return deferred.promise
 
   forEachSeries: (array, func) ->
     deferred      = async.defer()
+    tasks         = []
 
     applyFunction = (item) ->
       return ->
         func item
 
     for item, i in array
-      array[i] = applyFunction item
+      tasks.push(applyFunction item)
 
-    async.series(array).then deferred.resolve, deferred.reject
+    async.series(tasks).then deferred.resolve, deferred.reject
 
     return deferred.promise
 
   map: (array, func) ->
     deferred      = async.defer()
+    tasks         = []
 
     applyFunction = (item) ->
       return ->
         func item
 
     for item, i in array
-      array[i] = applyFunction item
+      tasks.push(applyFunction item)
 
-    async.parallel(array).then deferred.resolve, deferred.reject
+    async.parallel(tasks).then deferred.resolve, deferred.reject
 
     return deferred.promise
 
   mapSeries: (array, func) ->
     deferred      = async.defer()
+    tasks         = []
 
     applyFunction = (item) ->
       return ->
         func item
 
     for item, i in array
-      array[i] = applyFunction item
+      tasks.push(applyFunction item)
 
-    async.series(array).then deferred.resolve, deferred.reject
+    async.series(tasks).then deferred.resolve, deferred.reject
 
     return deferred.promise
 
@@ -271,7 +275,6 @@ async =
 
   detect: (array, func) ->
     deferred      = async.defer()
-    tasks         = []
 
     resolveCallback = (item) ->
       return (result) ->

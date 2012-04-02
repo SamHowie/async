@@ -165,8 +165,9 @@
       };
     },
     forEach: function(array, func) {
-      var applyFunction, deferred, i, item, _len;
+      var applyFunction, deferred, i, item, tasks, _len;
       deferred = async.defer();
+      tasks = [];
       applyFunction = function(item) {
         return function() {
           return func(item);
@@ -174,14 +175,15 @@
       };
       for (i = 0, _len = array.length; i < _len; i++) {
         item = array[i];
-        array[i] = applyFunction(item);
+        tasks.push(applyFunction(item));
       }
-      async.parallel(array).then(deferred.resolve, deferred.reject);
+      async.parallel(tasks).then(deferred.resolve, deferred.reject);
       return deferred.promise;
     },
     forEachSeries: function(array, func) {
-      var applyFunction, deferred, i, item, _len;
+      var applyFunction, deferred, i, item, tasks, _len;
       deferred = async.defer();
+      tasks = [];
       applyFunction = function(item) {
         return function() {
           return func(item);
@@ -189,14 +191,15 @@
       };
       for (i = 0, _len = array.length; i < _len; i++) {
         item = array[i];
-        array[i] = applyFunction(item);
+        tasks.push(applyFunction(item));
       }
-      async.series(array).then(deferred.resolve, deferred.reject);
+      async.series(tasks).then(deferred.resolve, deferred.reject);
       return deferred.promise;
     },
     map: function(array, func) {
-      var applyFunction, deferred, i, item, _len;
+      var applyFunction, deferred, i, item, tasks, _len;
       deferred = async.defer();
+      tasks = [];
       applyFunction = function(item) {
         return function() {
           return func(item);
@@ -204,14 +207,15 @@
       };
       for (i = 0, _len = array.length; i < _len; i++) {
         item = array[i];
-        array[i] = applyFunction(item);
+        tasks.push(applyFunction(item));
       }
-      async.parallel(array).then(deferred.resolve, deferred.reject);
+      async.parallel(tasks).then(deferred.resolve, deferred.reject);
       return deferred.promise;
     },
     mapSeries: function(array, func) {
-      var applyFunction, deferred, i, item, _len;
+      var applyFunction, deferred, i, item, tasks, _len;
       deferred = async.defer();
+      tasks = [];
       applyFunction = function(item) {
         return function() {
           return func(item);
@@ -219,9 +223,9 @@
       };
       for (i = 0, _len = array.length; i < _len; i++) {
         item = array[i];
-        array[i] = applyFunction(item);
+        tasks.push(applyFunction(item));
       }
-      async.series(array).then(deferred.resolve, deferred.reject);
+      async.series(tasks).then(deferred.resolve, deferred.reject);
       return deferred.promise;
     },
     filter: function(array, func) {
@@ -329,9 +333,8 @@
       return deferred.promise;
     },
     detect: function(array, func) {
-      var deferred, item, resolveCallback, result, tasks, _i, _len;
+      var deferred, item, resolveCallback, result, _i, _len;
       deferred = async.defer();
-      tasks = [];
       resolveCallback = function(item) {
         return function(result) {
           if (deferred.isFulfilled()) return;

@@ -95,10 +95,10 @@ Returns a deferred object for creating custom async tasks.
 Takes a synchronous function and returns a promise of its return value.
 
     async.call(function(x){return x * 2;}, undefined, 2)
-        .then(
-            function(result){
-                console.log(result); // 4
-        });
+    .then(
+        function(result){
+            console.log(result); // 4
+    });
 
 <a name="promisify" />
 ### promisify(value)

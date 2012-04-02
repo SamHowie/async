@@ -124,7 +124,8 @@ step_fail = (value) ->
     , 500
   )
   return deferred.promise
-###
+
+
 # ------------------------------------------------------------------------------------------ SERIES TESTS
 # Series - ascync steps
 async.series([task_01, task_02, task_03, task_04]).then((result) -> console.log result)
@@ -140,6 +141,7 @@ async.series([task_01, ((result) -> return "Task 02 (sync)"), task_03])
 # Series - mix of async and sync steps (sync step first)
 async.series([((result) -> return "Task 01 (sync)"), task_02, task_03])
   .then(((result) -> console.log result), ((err) -> console.log err))
+
 # Series - step failure
 async.series([task_01, task_fail, task_03])
   .then(((result) -> console.log result), ((err) -> console.log err))
@@ -226,7 +228,7 @@ async.detectSeries([1,"apples",3,4], isEven)
 
 async.detectSeries([2,"apples",3,4], isEven)
   .then(((result) -> console.log result), ((err) -> console.log err))
-###
+
 # ------------------------------------------------------------------------------- GITHUB EXAMPLES TESTS
 async.call(step1, undefined, [])
 .then(step2)
@@ -267,3 +269,8 @@ async.series([
   (results) -> console.log results[3],
   (error) -> console.log error
 );
+
+async.call(((x) -> x * 2), undefined, 2)
+.then((result) -> console.log result)
+
+
