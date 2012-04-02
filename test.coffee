@@ -124,13 +124,13 @@ step_fail = (value) ->
     , 500
   )
   return deferred.promise
-
+###
 # ------------------------------------------------------------------------------------------ SERIES TESTS
 # Series - ascync steps
 async.series([task_01, task_02, task_03, task_04]).then((result) -> console.log result)
 
 # Series - mix of async and sync steps (sync step last)
-async.series([task_01,task_02, ((result) -> return "Task 03 (sync)")])
+async.series([task_01, task_02, ((result) -> return "Task 03 (sync)")])
   .then(((result) -> console.log result), ((err) -> console.log err))
 
 # Series - mix of async and sync steps (sync middle last)
@@ -145,7 +145,7 @@ async.series([task_01, task_fail, task_03])
   .then(((result) -> console.log result), ((err) -> console.log err))
 
 # Series - arguments applied to first step
-async.series([task_with_value], {arguments:["Task 01 (passed value)"]})
+async.series([task_with_value("Task 01 (passed value)")])
   .then((result) -> console.log result)
 
 # ---------------------------------------------------------------------------------------- PARALLEL TESTS
@@ -226,9 +226,9 @@ async.detectSeries([1,"apples",3,4], isEven)
 
 async.detectSeries([2,"apples",3,4], isEven)
   .then(((result) -> console.log result), ((err) -> console.log err))
-
+###
 # ------------------------------------------------------------------------------- GITHUB EXAMPLES TESTS
-async.call(step1([]))
+async.call(step1, undefined, [])
 .then(step2)
 .then(step3)
 .then(step4)
@@ -237,7 +237,7 @@ async.call(step1([]))
   (error) -> console.log error
 )
 
-async.call(step1([]))
+async.call(step1, undefined, [])
 .then(step2)
 .then(step_fail)
 .then(step4)
@@ -267,4 +267,3 @@ async.series([
   (results) -> console.log results[3],
   (error) -> console.log error
 );
-

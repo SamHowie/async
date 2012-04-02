@@ -118,19 +118,15 @@
   })();
 
   async = {
-    call: function(value, context, args) {
-      var deferred;
+    call: function(value, context) {
+      var amount, args, deferred;
+      if (value === null) return;
       deferred = new Deferred();
+      args = Array.prototype.slice.call(arguments);
+      args.splice(0, (amount = (args.length >= 2 ? 2 : 1)));
       try {
-        if (value.then) {
-          if (value instanceof Promise) return value;
-          value.then(deferred.resolve, deferred.reject);
-        } else {
-          if (toType(value) === "Function") {
-            value = value.apply(context || {}, args || []);
-          }
-          deferred.resolve(value);
-        }
+        value = value.apply(context || {}, args);
+        deferred.resolve(value);
       } catch (error) {
         deferred.reject(error);
       }
@@ -139,7 +135,23 @@
     defer: function() {
       return new Deferred();
     },
-    promisify: function(nodeasyncFunction, context) {
+    promisify: function(value) {
+      var deferred;
+      if (value instanceof Promise) return value;
+      deferred = new Deferred();
+      try {
+        if (value.then) {
+          value.then(deferred.resolve, deferred.reject);
+        } else {
+          if (toType(value) === "Function") value = value();
+          deferred.resolve(value);
+        }
+      } catch (error) {
+        deferred.reject(error);
+      }
+      return deferred.promise;
+    },
+    promisifyNode: function(nodeAsyncFunction, context) {
       return function() {
         var args, deferred;
         deferred = async.defer();
@@ -148,7 +160,7 @@
           if (err !== null) return deferred.reject(err);
           return deferred.resolve(val);
         });
-        nodeasyncFunction.apply(context || {}, args);
+        nodeAsyncFunction.apply(context || {}, args);
         return deferred.promise;
       };
     },
@@ -356,7 +368,7 @@
         }
       };
       doStep = function(index) {
-        return async.call(func(array[index])).then(resolveCallback, deferred.reject);
+        return async.promisify(func(array[index])).then(resolveCallback, deferred.reject);
       };
       doStep(currentIndex);
       return deferred.promise;
@@ -366,11 +378,11 @@
       results = [];
       deferred = new Deferred();
       failed = false;
-      resolveCallback = function(func) {
+      resolveCallback = function(task) {
         return function(result) {
           results.push(result);
-          if (func === void 0) deferred.resolve(results);
-          return func(result);
+          if (task === void 0) deferred.resolve(results);
+          return async.promisify(task(result));
         };
       };
       failCallback = function(err) {
@@ -379,8 +391,7 @@
         return deferred.reject(err);
       };
       try {
-        options = options || {};
-        promise = async.call(tasks.shift(), options.context || {}, options.arguments || []);
+        promise = async.promisify(tasks.shift());
       } catch (error) {
         failCallback(error);
       }

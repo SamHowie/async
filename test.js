@@ -128,209 +128,117 @@
     return deferred.promise;
   };
 
-  async.series([task_01, task_02, task_03, task_04]).then(function(result) {
-    return console.log(result);
-  });
+  /*
+  # ------------------------------------------------------------------------------------------ SERIES TESTS
+  # Series - ascync steps
+  async.series([task_01, task_02, task_03, task_04]).then((result) -> console.log result)
+  
+  # Series - mix of async and sync steps (sync step last)
+  async.series([task_01, task_02, ((result) -> return "Task 03 (sync)")])
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  # Series - mix of async and sync steps (sync middle last)
+  async.series([task_01, ((result) -> return "Task 02 (sync)"), task_03])
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  # Series - mix of async and sync steps (sync step first)
+  async.series([((result) -> return "Task 01 (sync)"), task_02, task_03])
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  # Series - step failure
+  async.series([task_01, task_fail, task_03])
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  # Series - arguments applied to first step
+  async.series([task_with_value("Task 01 (passed value)")])
+    .then((result) -> console.log result)
+  
+  # ---------------------------------------------------------------------------------------- PARALLEL TESTS
+  # Parallel - async steps that finish at different times
+  async.parallel([task_01, task_02, task_03, task_04])
+    .then(((result) -> console.log result), ((error) -> console.log error))
+  
+  # Parallel - mix of async and sync steps (sync step last)
+  async.parallel([task_01, task_02, ((result) -> return "Task 03 (sync)")])
+    .then(((result) -> console.log result), ((error) -> console.log error))
+  
+  # Parallel - mix of async and sync steps (sync step middle)
+  async.parallel([task_01, ((result) -> return "Task 02 (sync)"), task_03])
+    .then(((result) -> console.log result), ((error) -> console.log error))
+  
+  # Parallel - mix of async and sync steps (sync step first)
+  async.parallel([((result) -> return "Task 01 (sync)"), task_02, task_03])
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  # Parallel - step failure
+  async.parallel([task_01, task_02, task_fail, task_04])
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  # ---------------------------------------------------------------------------------------- FOREACH TESTS
+  async.forEach([1,2,3,4], double)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.forEach([1,2,"alfred",4], double)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.forEachSeries([1,2,3,4], double)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.forEachSeries([1,2,"alfred",4], double)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  # ---------------------------------------------------------------------------------------- FILTER TESTS
+  async.filter([1,2,3,4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.filter([1,2,"apples",4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.filterSeries([1,2,3,4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.filterSeries([1,"oranges",3,4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  # ---------------------------------------------------------------------------------------- REJECT TESTS
+  async.reject([1,2,3,4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.reject([1,2,"apples",4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.rejectSeries([1,2,3,4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.rejectSeries([1,"oranges",3,4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  # ---------------------------------------------------------------------------------------- DETECT TESTS
+  async.detect([1,3,5,6], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.detect([1,"apples",3,4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.detect([2,"apples",3,4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.detectSeries([1,3,5,6], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.detectSeries([1,"apples",3,4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  
+  async.detectSeries([2,"apples",3,4], isEven)
+    .then(((result) -> console.log result), ((err) -> console.log err))
+  */
 
-  async.series([
-    task_01, task_02, (function(result) {
-      return "Task 03 (sync)";
-    })
-  ]).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.series([
-    task_01, (function(result) {
-      return "Task 02 (sync)";
-    }), task_03
-  ]).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.series([
-    (function(result) {
-      return "Task 01 (sync)";
-    }), task_02, task_03
-  ]).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.series([task_01, task_fail, task_03]).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.series([task_with_value], {
-    arguments: ["Task 01 (passed value)"]
-  }).then(function(result) {
-    return console.log(result);
-  });
-
-  async.parallel([task_01, task_02, task_03, task_04]).then((function(result) {
-    return console.log(result);
-  }), (function(error) {
-    return console.log(error);
-  }));
-
-  async.parallel([
-    task_01, task_02, (function(result) {
-      return "Task 03 (sync)";
-    })
-  ]).then((function(result) {
-    return console.log(result);
-  }), (function(error) {
-    return console.log(error);
-  }));
-
-  async.parallel([
-    task_01, (function(result) {
-      return "Task 02 (sync)";
-    }), task_03
-  ]).then((function(result) {
-    return console.log(result);
-  }), (function(error) {
-    return console.log(error);
-  }));
-
-  async.parallel([
-    (function(result) {
-      return "Task 01 (sync)";
-    }), task_02, task_03
-  ]).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.parallel([task_01, task_02, task_fail, task_04]).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.forEach([1, 2, 3, 4], double).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.forEach([1, 2, "alfred", 4], double).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.forEachSeries([1, 2, 3, 4], double).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.forEachSeries([1, 2, "alfred", 4], double).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.filter([1, 2, 3, 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.filter([1, 2, "apples", 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.filterSeries([1, 2, 3, 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.filterSeries([1, "oranges", 3, 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.reject([1, 2, 3, 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.reject([1, 2, "apples", 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.rejectSeries([1, 2, 3, 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.rejectSeries([1, "oranges", 3, 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.detect([1, 3, 5, 6], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.detect([1, "apples", 3, 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.detect([2, "apples", 3, 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.detectSeries([1, 3, 5, 6], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.detectSeries([1, "apples", 3, 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.detectSeries([2, "apples", 3, 4], isEven).then((function(result) {
-    return console.log(result);
-  }), (function(err) {
-    return console.log(err);
-  }));
-
-  async.call(step1([])).then(step2).then(step3).then(step4).then(function(result) {
+  async.call(step1, void 0, []).then(step2).then(step3).then(step4).then(function(result) {
     return console.log(result);
   }, function(error) {
     return console.log(error);
   });
 
-  async.call(step1([])).then(step2).then(step_fail).then(step4).then(function(result) {
+  async.call(step1, void 0, []).then(step2).then(step_fail).then(step4).then(function(result) {
     return console.log(result);
   }, function(error) {
     return console.log(error);

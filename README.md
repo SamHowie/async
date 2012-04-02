@@ -18,7 +18,7 @@ Turn this (example sourced from [q](http://github.com/kriskowal/q)):
 
 Into this:
 
-    async.call(step01(value1))
+    async.call(step01, undefined, value1)
     .then(step2)
     .then(step3)
     .then(step4)
@@ -50,7 +50,100 @@ Or this:
 
 ## Documentation
 
-Postponed due to rain.
+### Utilities
+
+* [defer](#defer)
+* [call](#call)
+* [promisify](#promisify)
+* [promisifyNodeJS](#promisifyNodeJS)
+
+### Functional Operations
+
+* [forEach](#forEach)
+* [map](#map)
+* [filter](#filter)
+* [reject](#reject)
+* [detect](#detect)
+
+### Control Flow
+
+* [series](#series)
+* [parallel](#parallel)
+
+## Utilities
+
+<a name="defer" />
+### defer()
+
+Returns a deferred object for creating custom async tasks.
+
+    // This example shows how a deferred object can be used to create an async task.
+    // Upon execution of the task, a promise is returned. 
+    // The task performs an asynchronous wait of 500 milliseconds before resolving the promise.
+
+    asyncTask = function() {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve('Hello Promises!');
+        }, 500);
+        return deferred.promise;
+    };
+
+<a name="call" />
+### call(value, context, args)
+
+Takes a synchronous function and returns a promise of its return value.
+
+    async.call(function(x){return x * 2;}, undefined, 2)
+        .then(
+            function(result){
+                console.log(result); // 4
+        });
+
+<a name="promisify" />
+### promisify(value)
+
+Takes a value and converts it into a promise.
+
+<a name="promisifyNodeJS" />
+### promisifyNodeJS(nodeAsyncFunction, context)
+
+Takes a value and converts it into a promise.
+
+## Functional Operations
+
+<a name="forEach" />
+### forEach(array, func)
+
+### forEachSeries (array, func)
+
+<a name="map" />
+### map(array, func)
+
+### mapSeries (array, func)
+
+<a name="filter" />
+### filter(array, func)
+
+### filterSeries (array, func)
+
+<a name="reject" />
+### reject(array, func)
+
+### rejectSeries (array, func)
+
+<a name="detect" />
+### detect(array, func)
+
+### detectSeries (array, func)
+
+## Control Flow
+
+<a name="series" />
+### series(tasks)
+
+<a name="parallel" />
+### parallel (tasks)
 
 ## Issues?
 

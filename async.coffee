@@ -72,19 +72,18 @@ class Then
       deferred.reject error
 
 async =
-  # turns value into a promise
-  call: (value, context, args) ->
+  # turns a function into a promise
+  call: (value, context) ->
+    return undefined if value == null
+
     deferred = new Deferred()
 
-    try
-      if value.then
-        return value if value instanceof Promise
-        value.then deferred.resolve, deferred.reject # making assumption that value is a promise from another async library
-      else 
-        if toType(value) is "Function"
-          value = value.apply (context || {}), (args || [])
-        deferred.resolve value
+    args = Array.prototype.slice.call arguments
+    args.splice 0, (amount = (if args.length >= 2 then 2 else 1))
 
+    try
+      value = value.apply (context || {}), args
+      deferred.resolve value
     catch error
       deferred.reject error
 
@@ -94,8 +93,26 @@ async =
   defer: () ->
     return new Deferred()
 
+  promisify: (value) ->
+    return value if value instanceof Promise
+
+    deferred = new Deferred()
+
+    try
+      if value.then
+        value.then deferred.resolve, deferred.reject # making assumption that value is a promise from another async library
+      else 
+        if toType(value) is "Function"
+          value = value()
+        deferred.resolve value
+
+    catch error
+      deferred.reject error
+
+    return deferred.promise
+
   # Takes an async nodejs library function and returns a promisified function (a function that returns a promise).
-  promisify: (nodeasyncFunction, context) ->
+  promisifyNode: (nodeAsyncFunction, context) ->
     return () ->
       deferred = async.defer()
       args = Array.prototype.slice.call arguments
@@ -105,7 +122,7 @@ async =
           return deferred.reject err
         return deferred.resolve val
 
-      nodeasyncFunction.apply context || {}, args
+      nodeAsyncFunction.apply context || {}, args
 
       return deferred.promise
 
@@ -287,7 +304,7 @@ async =
         doStep currentIndex
 
     doStep = (index) ->
-      async.call(func array[index]).then resolveCallback, deferred.reject
+      async.promisify(func array[index]).then resolveCallback, deferred.reject
 
     doStep currentIndex
 
@@ -300,11 +317,11 @@ async =
     deferred      = new Deferred()
     failed        = false
 
-    resolveCallback = (func) ->
+    resolveCallback = (task) ->
       return (result) ->
         results.push result
-        deferred.resolve results if func is undefined
-        return func(result)
+        deferred.resolve results if task is undefined
+        return async.promisify task(result)
 
     failCallback = (err) ->
       return if failed
@@ -312,8 +329,7 @@ async =
       deferred.reject err
 
     try
-      options = options || {}
-      promise = async.call tasks.shift(), (options.context || {}), (options.arguments || [])
+      promise = async.promisify tasks.shift()
     catch error
       failCallback error # Handles case where first task is sync and causes an error
 
@@ -353,7 +369,7 @@ async =
         if result instanceof Promise
           result.then resolveCallback(i), failCallback
         else
-          resolveCallback(i) result
+          resolveCallback(i) result # Handle synchronous task immediately
       catch error
         failCallback error
 
