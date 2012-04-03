@@ -90,9 +90,15 @@ Returns a deferred object for creating custom async tasks.
     };
 
 <a name="call" />
-### call(value, context, args)
+### call(func, context, ...)
 
 Takes a synchronous function and returns a promise of its return value.
+
+#### Arguments
+
+* func      - Synchronous function to be called.
+* context   - Context to be applied to the function being called.
+* ...       - arguments to be passed to the function being called.
 
     async.call(function(x){return x * 2;}, undefined, 2)
     .then(function(result) {
@@ -104,24 +110,28 @@ Takes a synchronous function and returns a promise of its return value.
 
 Takes a value and converts it into a promise.
 
-If value is a promise, the promise is simply returned.
+#### Arguments
 
+* value - Value to be converted.
+
+If value is a promise, the promise is simply returned.
 If value is a function, the function is executed and the result is converted.
 
 Note: Asynchronous functions are not supported. If you want to promisfy an asynchronous function written in nodejs callback style please use promisifyNode
+
 
     // Promisify a string.
     async.promisify("peanut butter")
     .then(function(result) {
         console.log(result); // Peanut Butter
     });
-
+ 
     // Promisify an object.
     async.promisify({spread: "vegemite"})
     .then(function(result) {
         console.log(result.spread); // vegemite
     });
-
+ 
     // Promisify a function.
     async.promisify(function(){return "Honey"})
     .then(function(result) {
@@ -133,8 +143,10 @@ Note: Asynchronous functions are not supported. If you want to promisfy an async
 
 Takes a node style asynchronous function and converts it into a function that returns a promise.
 
-asyncFunction   - A node style asynchronous function
-context         - The context of the asynchronous function (defaults to {})
+#### Arguments
+
+* asyncFunction   - A node style asynchronous function.
+* context         - The context of the asynchronous function (defaults to {}). 
 
     // Promisify nodejs fs.readdir and fs.stats
     // Use these promisified tasks to print a list of file data for files in the current directory.
@@ -171,7 +183,41 @@ context         - The context of the asynchronous function (defaults to {})
 <a name="forEach" />
 ### forEach(array, func)
 
+Applies an asynchronous function to each element in an array, in parallel.
+
+#### Arguments
+
+* array - Array to have function applied to.
+* func  - function to apply to each element in array.
+
+    // Double each element in the array.
+    // All promises will be fulfilled at the same time.
+    async.forEach([1,2,3,4], function(x) {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve(x * 2);
+        }, 100);
+        return deferred.promise;
+    });
+
 ### forEachSeries (array, func)
+
+#### Arguments
+
+* array - Array to have function applied to.
+* func  - function to apply to each element in array.
+
+Applies an asynchronous function to each element in an array, in series.
+
+    // Double each element in the array.
+    // Each promises will be fulfilled at 100 millisecond intervals.
+    async.forEachSeries([1,2,3,4], function(x) {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve(x * 2);
+        }, 100);
+        return deferred.promise;
+    });
 
 <a name="map" />
 ### map(array, func)
