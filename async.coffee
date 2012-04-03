@@ -112,7 +112,8 @@ async =
     return deferred.promise
 
   # Takes an async nodejs library function and returns a promisified function (a function that returns a promise).
-  promisifyNode: (nodeAsyncFunction, context) ->
+  promisifyNode: (asyncFunction, context) ->
+    # Credit: Original Javascript implementation written by Nathan Stott (http://howtonode.org/promises)
     return () ->
       deferred = async.defer()
       args = Array.prototype.slice.call arguments
@@ -122,7 +123,7 @@ async =
           return deferred.reject err
         return deferred.resolve val
 
-      nodeAsyncFunction.apply context || {}, args
+      asyncFunction.apply context || {}, args
 
       return deferred.promise
 

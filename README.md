@@ -194,7 +194,7 @@ Applies an asynchronous function to each element in an array, in parallel.
 
 #### Arguments
 
-* array - Array to have function applied to.
+* array - Array of items to be operated upon.
 * func  - function to apply to each element in array.
 
 #### Example
@@ -204,8 +204,9 @@ Applies an asynchronous function to each element in an array, in parallel.
     async.forEach([1,2,3,4], function(x) {
         var deferred = async.defer();
         setTimeout(function() {
-            return deferred.resolve(x * 2);
-        }, 100);
+            console.log(x + " x 2 = " + (x * 2));
+            return deferred.resolve();
+        }, 200);
         return deferred.promise;
     });
 
@@ -221,34 +222,212 @@ Applies an asynchronous function to each element in an array, in series.
 #### Example
 
     // Double each element in the array.
-    // Each promises will be fulfilled at 100 millisecond intervals.
+    // Each promise will be fulfilled at 200 millisecond intervals.
     async.forEachSeries([1,2,3,4], function(x) {
         var deferred = async.defer();
         setTimeout(function() {
-            return deferred.resolve(x * 2);
-        }, 100);
+            console.log(x + " x 2 = " + (x * 2));
+            return deferred.resolve();
+        }, 200);
         return deferred.promise;
     });
 
 <a name="map" />
 ### map(array, func)
 
+Applies an asynchronous function to each element in an array, in parallel. Promises to return a new array of the results of each operation.
+
+#### Arguments
+
+* array - Array of items to be operated upon.
+* func  - function to apply to each element in array.
+
+#### Example
+
+    // Double each element in the array.
+    // All promises will be fulfilled at the same time.
+    async.map([1,2,3,4], function(x) {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve(x * 2);
+        }, 200);
+        return deferred.promise;
+    })
+    .then(function(results){
+        console.log(results); // [2,4,6,8]
+    });
+
 ### mapSeries (array, func)
+
+Applies an asynchronous function to each element in an array, in series. Promises to return a new array of the results of each operation.
+
+#### Arguments
+
+* array - Array of items to be operated upon.
+* func  - function to apply to each element in array.
+
+#### Example
+
+    // Double each element in the array.
+    // Each promise will be fulfilled at 200 millisecond intervals.
+    async.mapSeries([1,2,3,4], function(x) {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve(x * 2);
+        }, 200);
+        return deferred.promise;
+    })
+    .then(function(results){
+        console.log(results); // [2,4,6,8]
+    });
 
 <a name="filter" />
 ### filter(array, func)
 
+Filters out elements of an array that do not pass a validation check, in parallel. Promises to return a new array of the elements that passed validation.
+
+#### Arguments
+
+* array - Array of items to be operated upon.
+* func  - Validation function to apply to each element in array.
+
+#### Example
+
+    // Filter out all odd numbers from an array.
+    // All promises will be fulfilled at the same time.
+    async.filter([1,2,3,4], function(x) {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve((x % 2 === 0) ? true : false);
+        }, 200);
+        return deferred.promise;
+    })
+    .then(function(results){
+        console.log(results); // [2,4]
+    });
+
 ### filterSeries (array, func)
+
+Filters out elements of an array that do not pass a validation check, in series. Promises to return a new array of the elements that passed validation.
+
+#### Arguments
+
+* array - Array of items to be operated upon.
+* func  - Validation function to apply to each element in array.
+
+#### Example
+
+    // Filter out all odd numbers from an array.
+    // Each promise will be fulfilled at 200 millisecond intervals.
+    async.filterSeries([1,2,3,4], function(x) {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve((x % 2 === 0) ? true : false);
+        }, 200);
+        return deferred.promise;
+    })
+    .then(function(results){
+        console.log(results); // [2,4]
+    });
 
 <a name="reject" />
 ### reject(array, func)
 
+The opposite of filter. Reject filters out elements of an array that pass a validation check, in parallel. Promises to return a new array of the elements that failed validation.
+
+#### Arguments
+
+* array - Array of items to be operated upon.
+* func  - Validation function to apply to each element in array.
+
+#### Example
+
+    // Reject all even numbers in an array.
+    // All promises will be fulfilled at the same time.
+    async.reject([1,2,3,4], function(x) {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve((x % 2 === 0) ? true : false);
+        }, 200);
+        return deferred.promise;
+    })
+    .then(function(results){
+        console.log(results); // [1,3]
+    });
+
 ### rejectSeries (array, func)
+
+The opposite of filter. RejectSeries filters out elements of an array that pass a validation check, in series. Promises to return a new array of the elements that failed validation.
+
+#### Arguments
+
+* array - Array of items to be operated upon.
+* func  - Validation function to apply to each element in array.
+
+#### Example
+
+    // Reject all even numbers in an array.
+    // Each promise will be fulfilled at 200 millisecond intervals.
+    async.rejectSeries([1,2,3,4], function(x) {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve((x % 2 === 0) ? true : false);
+        }, 200);
+        return deferred.promise;
+    })
+    .then(function(results){
+        console.log(results); // [1,3]
+    });
+
 
 <a name="detect" />
 ### detect(array, func)
 
+Promises to return the first element in the array that passes a validation test, in parallel. 
+If order of validation checks are important, please use detectSeries.
+
+#### Arguments
+
+* array - Array of items to be operated upon.
+* func  - Validation function to apply to each element in array.
+
+#### Example
+
+    // Detect first number to be found even in array.
+    async.detect([1,2,3,4,5], function(x) {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve((x % 2 === 0) ? true : false);
+        }, 1000 / x); // Promises later in the array will be fulfilled first
+        return deferred.promise;
+    })
+    .then(function(results){
+        console.log(results); // 4
+    });
+
 ### detectSeries (array, func)
+
+Promises to return the first element in the array that passes a validation test, in series.
+Use this if order of tests are important.
+
+#### Arguments
+
+* array - Array of items to be operated upon.
+* func  - Validation function to apply to each element in array.
+
+#### Example
+
+    // Detect first number to be found even in array.
+    async.detectSeries([1,2,3,4], function(x) {
+        var deferred = async.defer();
+        setTimeout(function() {
+            return deferred.resolve((x % 2 === 0) ? true : false);
+        }, 200);
+        return deferred.promise;
+    })
+    .then(function(results){
+        console.log(results); // 2
+    });
 
 ## Control Flow
 

@@ -151,7 +151,7 @@
       }
       return deferred.promise;
     },
-    promisifyNode: function(nodeAsyncFunction, context) {
+    promisifyNode: function(asyncFunction, context) {
       return function() {
         var args, deferred;
         deferred = async.defer();
@@ -160,7 +160,7 @@
           if (err !== null) return deferred.reject(err);
           return deferred.resolve(val);
         });
-        nodeAsyncFunction.apply(context || {}, args);
+        asyncFunction.apply(context || {}, args);
         return deferred.promise;
       };
     },

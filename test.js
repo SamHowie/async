@@ -383,4 +383,148 @@ readdir("./")
 });
 ;
 
+  
+// Double each element in the array.
+// All promises will be fulfilled at the same time.
+async.forEach([1,2,3,4], function(x) {
+    var deferred = async.defer();
+    setTimeout(function() {
+        console.log(x + " x 2 = " + (x * 2));
+        return deferred.resolve();
+    }, 200);
+    return deferred.promise;
+});
+;
+
+  
+// Double each element in the array.
+// Each promise will be fulfilled at 200 millisecond intervals.
+async.forEachSeries([1,2,3,4], function(x) {
+    var deferred = async.defer();
+    setTimeout(function() {
+        console.log(x + " x 2 = " + (x * 2));
+        return deferred.resolve();
+    }, 200);
+    return deferred.promise;
+});
+;
+
+  
+// Double each element in the array.
+// All promises will be fulfilled at the same time.
+async.map([1,2,3,4], function(x) {
+    var deferred = async.defer();
+    setTimeout(function() {
+        return deferred.resolve(x * 2);
+    }, 200);
+    return deferred.promise;
+})
+.then(function(results){
+    console.log(results); // [2,4,6,8]
+});
+;
+
+  
+// Double each element in the array.
+// Each promise will be fulfilled at 200 millisecond intervals.
+async.mapSeries([1,2,3,4], function(x) {
+    var deferred = async.defer();
+    setTimeout(function() {
+        return deferred.resolve(x * 2);
+    }, 200);
+    return deferred.promise;
+})
+.then(function(results){
+    console.log(results); // [2,4,6,8]
+});
+;
+
+  
+// Filter out all odd numbers from an array.
+// All promises will be fulfilled at the same time.
+async.filter([1,2,3,4], function(x) {
+    var deferred = async.defer();
+    setTimeout(function() {
+        return deferred.resolve((x % 2 === 0) ? true : false);
+    }, 200);
+    return deferred.promise;
+})
+.then(function(results){
+    console.log(results); // [2,4]
+});
+;
+
+  
+// Filter out all odd numbers from an array.
+// Each promise will be fulfilled at 200 millisecond intervals.
+async.filterSeries([1,2,3,4], function(x) {
+    var deferred = async.defer();
+    setTimeout(function() {
+        return deferred.resolve((x % 2 === 0) ? true : false);
+    }, 200);
+    return deferred.promise;
+})
+.then(function(results){
+    console.log(results); // [2,4]
+});
+;
+
+  
+// Reject all even numbers in an array.
+// All promises will be fulfilled at the same time.
+async.reject([1,2,3,4], function(x) {
+    var deferred = async.defer();
+    setTimeout(function() {
+        return deferred.resolve((x % 2 === 0) ? true : false);
+    }, 200);
+    return deferred.promise;
+})
+.then(function(results){
+    console.log(results); // [1,3]
+});
+;
+
+  
+// Reject all even numbers in an array.
+// Each promise will be fulfilled at 200 millisecond intervals.
+async.rejectSeries([1,2,3,4], function(x) {
+    var deferred = async.defer();
+    setTimeout(function() {
+        return deferred.resolve((x % 2 === 0) ? true : false);
+    }, 200);
+    return deferred.promise;
+})
+.then(function(results){
+    console.log(results); // [1,3]
+});
+;
+
+  
+// Detect first number to be found even in array.
+async.detect([1,2,3,4,5], function(x) {
+    var deferred = async.defer();
+    setTimeout(function() {
+        return deferred.resolve((x % 2 === 0) ? true : false);
+    }, 1000 / x); // Promises later in the array will be fulfilled first
+    return deferred.promise;
+})
+.then(function(results){
+    console.log(results); // 4
+});
+;
+
+  
+// Detect first number to be found even in array.
+async.detectSeries([1,2,3,4], function(x) {
+    var deferred = async.defer();
+    setTimeout(function() {
+        return deferred.resolve((x % 2 === 0) ? true : false);
+    }, 200);
+    return deferred.promise;
+})
+.then(function(results){
+    console.log(results); // 2
+});
+;
+
 }).call(this);
