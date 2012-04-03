@@ -77,6 +77,8 @@ Or this:
 
 Returns a deferred object for creating custom async tasks.
 
+#### Example
+
     // This example shows how a deferred object can be used to create an async task.
     // Upon execution of the task, a promise is returned. 
     // The task performs an asynchronous wait of 500 milliseconds before fulfilling the promise.
@@ -100,6 +102,8 @@ Takes a synchronous function and returns a promise of its return value.
 * context   - Context to be applied to the function being called.
 * ...       - arguments to be passed to the function being called.
 
+#### Example
+
     async.call(function(x){return x * 2;}, undefined, 2)
     .then(function(result) {
         console.log(result); // 4
@@ -119,6 +123,7 @@ If value is a function, the function is executed and the result is converted.
 
 Note: Asynchronous functions are not supported. If you want to promisfy an asynchronous function written in nodejs callback style please use promisifyNode
 
+#### Example
 
     // Promisify a string.
     async.promisify("peanut butter")
@@ -147,6 +152,8 @@ Takes a node style asynchronous function and converts it into a function that re
 
 * asyncFunction   - A node style asynchronous function.
 * context         - The context of the asynchronous function (defaults to {}). 
+
+#### Example
 
     // Promisify nodejs fs.readdir and fs.stats
     // Use these promisified tasks to print a list of file data for files in the current directory.
@@ -190,6 +197,8 @@ Applies an asynchronous function to each element in an array, in parallel.
 * array - Array to have function applied to.
 * func  - function to apply to each element in array.
 
+#### Example
+
     // Double each element in the array.
     // All promises will be fulfilled at the same time.
     async.forEach([1,2,3,4], function(x) {
@@ -202,12 +211,14 @@ Applies an asynchronous function to each element in an array, in parallel.
 
 ### forEachSeries (array, func)
 
+Applies an asynchronous function to each element in an array, in series.
+
 #### Arguments
 
 * array - Array to have function applied to.
 * func  - function to apply to each element in array.
 
-Applies an asynchronous function to each element in an array, in series.
+#### Example
 
     // Double each element in the array.
     // Each promises will be fulfilled at 100 millisecond intervals.
