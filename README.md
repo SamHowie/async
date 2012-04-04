@@ -92,7 +92,7 @@ Adds a fulfilledHandler, errorHandler, and progressHandler to be called for comp
 
 Returns a new promise that is fulfilled when the given fulfilledHandler or errorHandler callback is finished.
 
-##### Example
+##### Examples
 fulfilledHandler usage example:
 
     // Resolves with the result "success" after 1000 milliseconds.
@@ -144,7 +144,7 @@ progressHandler usage example:
 
         setTimeout(function() {
             return deferred.progress("progress");
-        }, 1000);
+        }, 500);
 
         setTimeout(function() {
             return deferred.resolve("success");
