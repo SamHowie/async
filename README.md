@@ -92,9 +92,11 @@ Adds a fulfilledHandler, errorHandler, and progressHandler to be called for comp
 
 Returns a new promise that is fulfilled when the given fulfilledHandler or errorHandler callback is finished.
 
-#### Example
+##### Example
+fulfilledHandler usage example:
+
     // Resolves with the result "success" after 1000 milliseconds.
-    var echoSuccess = function () {
+    var echofulfill = function () {
         var deferred = async.deferred();
 
         setTimeout(function() {
@@ -104,15 +106,16 @@ Returns a new promise that is fulfilled when the given fulfilledHandler or error
         return deferred.promise; // Returns a promise object.
     }
 
-    echoSuccess()
+    echofulfill()
     .then(function(result) {
         // Called when promise is successfully fulfilled.
         console.log(result); // "success"
     });
 
+errorHandler usage example:
 
     // Rejects with the result "fail" after 1000 milliseconds.
-    var echoFail = function () {
+    var echoError = function () {
         var deferred = async.deferred();
 
         setTimeout(function() {
@@ -122,7 +125,7 @@ Returns a new promise that is fulfilled when the given fulfilledHandler or error
         return deferred.promise; // Returns a promise object.
     }
 
-    echoFail()
+    echoError()
     .then(
         function(result) {
             // Will never be called.
@@ -133,6 +136,7 @@ Returns a new promise that is fulfilled when the given fulfilledHandler or error
         }
     );
 
+progressHandler usage example:
 
     // Rejects with the result "fail" after 1000 milliseconds.
     var echoProgress = function () {
