@@ -16,6 +16,7 @@
   Deferred = (function() {
 
     function Deferred() {
+      this.progress = __bind(this.progress, this);
       this.reject = __bind(this.reject, this);
       this.resolve = __bind(this.resolve, this);
       this.setThen = __bind(this.setThen, this);      this.promise = new Promise(this);
@@ -27,9 +28,9 @@
       return this._fulfillment != null;
     };
 
-    Deferred.prototype.setThen = function(success, failure) {
+    Deferred.prototype.setThen = function(success, failure, progress) {
       var fulfillment, _then;
-      _then = this._then = new Then(success, failure);
+      _then = this._then = new Then(success, failure, progress);
       if (fulfillment = this._fulfillment) {
         _then["do"](fulfillment.type, fulfillment.result);
       }
@@ -42,6 +43,11 @@
 
     Deferred.prototype.reject = function(result) {
       return this._fulfill('reject', result);
+    };
+
+    Deferred.prototype.progress = function(result) {
+      var _then;
+      if (_then = this._then) return _then["do"]('progress', result);
     };
 
     Deferred.prototype._fulfill = function(type, result) {
@@ -71,8 +77,8 @@
       this.isPromise = true;
     }
 
-    Promise.prototype.then = function(success, failure) {
-      return this._deferred.setThen(success, failure);
+    Promise.prototype.then = function(success, failure, progress) {
+      return this._deferred.setThen(success, failure, progress);
     };
 
     return Promise;
@@ -81,12 +87,13 @@
 
   Then = (function() {
 
-    function Then(success, failure) {
+    function Then(success, failure, progress) {
       this.deferred = new Deferred();
       this.promise = this.deferred.promise;
       this._callbacks = {
         resolve: success,
-        reject: failure
+        reject: failure,
+        progress: progress
       };
     }
 
@@ -96,10 +103,13 @@
       callbacks = this._callbacks;
       try {
         callback = callbacks[type];
-        if (!callback) return deferred.reject(value);
+        if (!callback) {
+          if (type === 'progress') return;
+          return deferred.reject(value);
+        }
         result = callback(value);
         if (result instanceof Promise) {
-          return result.then(deferred.resolve, deferred.reject);
+          return result.then(deferred.resolve, deferred.reject, deferred.progress);
         } else {
           switch (type) {
             case type === "resolve":
@@ -177,7 +187,7 @@
         item = array[i];
         tasks.push(applyFunction(item));
       }
-      async.parallel(tasks).then(deferred.resolve, deferred.reject);
+      async.parallel(tasks).then(deferred.resolve, deferred.reject, deferred.progress);
       return deferred.promise;
     },
     forEachSeries: function(array, func) {
@@ -193,7 +203,7 @@
         item = array[i];
         tasks.push(applyFunction(item));
       }
-      async.series(tasks).then(deferred.resolve, deferred.reject);
+      async.series(tasks).then(deferred.resolve, deferred.reject, deferred.progress);
       return deferred.promise;
     },
     map: function(array, func) {
@@ -209,7 +219,7 @@
         item = array[i];
         tasks.push(applyFunction(item));
       }
-      async.parallel(tasks).then(deferred.resolve, deferred.reject);
+      async.parallel(tasks).then(deferred.resolve, deferred.reject, deferred.progress);
       return deferred.promise;
     },
     mapSeries: function(array, func) {
@@ -225,7 +235,7 @@
         item = array[i];
         tasks.push(applyFunction(item));
       }
-      async.series(tasks).then(deferred.resolve, deferred.reject);
+      async.series(tasks).then(deferred.resolve, deferred.reject, deferred.progress);
       return deferred.promise;
     },
     filter: function(array, func) {
@@ -251,7 +261,7 @@
         item = array[i];
         tasks.push(applyFunction(item));
       }
-      async.parallel(tasks).then(filterResults, deferred.reject);
+      async.parallel(tasks).then(filterResults, deferred.reject, deferred.progress);
       return deferred.promise;
     },
     filterSeries: function(array, func) {
@@ -277,7 +287,7 @@
         item = array[i];
         tasks.push(applyFunction(item));
       }
-      async.series(tasks).then(filterResults, deferred.reject);
+      async.series(tasks).then(filterResults, deferred.reject, deferred.progress);
       return deferred.promise;
     },
     reject: function(array, func) {
@@ -303,7 +313,7 @@
         item = array[i];
         tasks.push(applyFunction(item));
       }
-      async.parallel(tasks).then(filterResults, deferred.reject);
+      async.parallel(tasks).then(filterResults, deferred.reject, deferred.progress);
       return deferred.promise;
     },
     rejectSeries: function(array, func) {
@@ -329,7 +339,7 @@
         item = array[i];
         tasks.push(applyFunction(item));
       }
-      async.series(tasks).then(filterResults, deferred.reject);
+      async.series(tasks).then(filterResults, deferred.reject, deferred.progress);
       return deferred.promise;
     },
     detect: function(array, func) {
@@ -347,7 +357,7 @@
         try {
           result = func(item);
           if (result instanceof Promise) {
-            result.then(resolveCallback(item), deferred.reject);
+            result.then(resolveCallback(item), deferred.reject, deferred.progress);
           } else {
             resolveCallback(item)(result);
           }
@@ -371,7 +381,7 @@
         }
       };
       doStep = function(index) {
-        return async.promisify(func(array[index])).then(resolveCallback, deferred.reject);
+        return async.promisify(func(array[index])).then(resolveCallback, deferred.reject, deferred.progress);
       };
       doStep(currentIndex);
       return deferred.promise;
@@ -384,6 +394,7 @@
       resolveCallback = function(task) {
         return function(result) {
           results.push(result);
+          deferred.progress(result);
           if (task === void 0) deferred.resolve(results);
           return async.promisify(task(result));
         };
@@ -430,6 +441,7 @@
         return function(result) {
           if (deferred.isFulfilled()) return;
           addResult(i, result);
+          deferred.progress(result);
           tasksComplete++;
           if (tasksComplete === tasks.length) return deferred.resolve(results);
         };

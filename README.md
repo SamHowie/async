@@ -50,6 +50,11 @@ Or this:
 
 ## Documentation
 
+### Objects
+
+* [Promise](#Promise)
+* [Deferred](#Deferred)
+
 ### Utilities
 
 * [defer](#defer)
@@ -69,6 +74,101 @@ Or this:
 
 * [series](#series)
 * [parallel](#parallel)
+
+## Objects
+
+<a name="Promise" />
+### Promise
+
+The async Utility library implements Promises according to the CommonJS Promises/A specification as follows:
+
+A promise represents the eventual value returned from the single completion of an operation. A promise may be in one of the three states, unfulfilled, fulfilled, and failed. The promise will only move from unfulfilled to fulfilled, or unfulfilled to failed. Once a promise is fulfilled or failed, the promise's value can not be changed.
+
+#### Public Methods
+
+##### then(fulfilledHandler, errorHandler, progressHandler)
+
+Adds a fulfilledHandler, errorHandler, and progressHandler to be called for completion of a promise. The fulfilledHandler is called when the promise is fulfilled. The errorHandler is called when a promise fails. The progressHandler is called for progress events.
+
+Returns a new promise that is fulfilled when the given fulfilledHandler or errorHandler callback is finished.
+
+#### Example
+    // Resolves with the result "success" after 1000 milliseconds.
+    var echoSuccess = function () {
+        var deferred = async.deferred();
+
+        setTimeout(function() {
+            return deferred.resolve("success");
+        }, 1000);
+
+        return deferred.promise; // Returns a promise object.
+    }
+
+    echoSuccess()
+    .then(function(result) {
+        // Called when promise is successfully fulfilled.
+        console.log(result); // "success"
+    });
+
+
+    // Rejects with the result "fail" after 1000 milliseconds.
+    var echoFail = function () {
+        var deferred = async.deferred();
+
+        setTimeout(function() {
+            return deferred.reject("fail");
+        }, 1000);
+
+        return deferred.promise; // Returns a promise object.
+    }
+
+    echoFail()
+    .then(
+        function(result) {
+            // Will never be called.
+        },
+        function(error) {
+            // Called when promise is failed.
+            console.log(error); // "fail"
+        }
+    );
+
+
+    // Rejects with the result "fail" after 1000 milliseconds.
+    var echoProgress = function () {
+        var deferred = async.deferred();
+
+        setTimeout(function() {
+            return deferred.progress("progress");
+        }, 1000);
+
+        setTimeout(function() {
+            return deferred.resolve("success");
+        }, 1000);
+
+        return deferred.promise; // Returns a promise object.
+    }
+
+    echoProgress()
+    .then(
+        function(result) {
+            // Called after 1000 milliseconds.
+            console.log(result); // "success"
+        },
+        function(error) {
+            // Never called.
+        },
+        function(progress) {
+            // Called after 500 milliseconds.
+            console.log(progress); // "progress"
+        }
+
+    );
+
+<a name="Deferred" />
+### Deferred
+
+#### Example
 
 ## Utilities
 

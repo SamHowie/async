@@ -284,6 +284,51 @@ readdir("./")
 .then(function(files) {
     var deferred = async.defer();
     async.map(files, function(file) {
+        var d = async.defer();
+        stat(file)
+        .then(function(stats) {
+            var result = "The file " + file + " is " + stats.size + " bytes.";
+            //deferred.progress(result);
+            d.resolve(result);
+        });
+        return d.promise;
+    })
+    .then(function(results) {
+        deferred.resolve(results);
+    }, function (error) {
+        deferred.reject(error);
+    }, function (progress) {
+        deferred.progress(progress);
+    });
+    return deferred.promise;
+})
+.then(
+    function(results) {
+        var i;
+        for (i = 0; i < results.length; i++) {
+            console.log(results[i]);
+        }
+    },
+    function(error) {
+        //
+    },
+    function(progress) {
+        console.log('progress: ' + progress);
+    }
+);
+`
+
+`
+// Promisify nodejs fs.readdir and fs.stats
+// Use these promises to print a list of file data for files in current directory.
+var fs      = require('fs'),
+    readdir = async.promisifyNode(fs.readdir),
+    stat    = async.promisifyNode(fs.stat);
+
+readdir("./")
+.then(function(files) {
+    var deferred = async.defer();
+    async.map(files, function(file) {
         var deferred = async.defer();
         stat(file)
         .then(function(stats) {

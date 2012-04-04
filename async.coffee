@@ -18,8 +18,8 @@ class Deferred
   isFulfilled: ->
     return @_fulfillment?
 
-  setThen: (success, failure) =>
-    _then = @_then = new Then success, failure
+  setThen: (success, failure, progress) =>
+    _then = @_then = new Then success, failure, progress
     _then.do(fulfillment.type, fulfillment.result) if fulfillment = @_fulfillment
     return _then.promise
 
@@ -28,6 +28,9 @@ class Deferred
 
   reject: (result) =>
     @_fulfill 'reject', result
+
+  progress: (result) =>
+    _then.do('progress', result) if _then = @_then
 
   _fulfill: (type, result) ->
     if @_fulfillment then return console?.logWarning? 'Deferred::fulfill(type, result): Attempting to fulfill a promise that has already been fulfilled. Fulfillment ignored.'
@@ -46,24 +49,26 @@ class Promise
     @_deferred = deferred
     @isPromise = true
 
-  then: (success, failure) ->
-    return @_deferred.setThen success, failure
+  then: (success, failure, progress) ->
+    return @_deferred.setThen success, failure, progress
 
 class Then
-  constructor: (success, failure) ->
+  constructor: (success, failure, progress) ->
     @deferred = new Deferred()
     @promise = @deferred.promise
-    @_callbacks = {resolve: success, reject: failure}
+    @_callbacks = {resolve: success, reject: failure, progress: progress}
 
   do: (type, value) ->
     deferred = @deferred
     callbacks = @_callbacks
     try
       callback = callbacks[type]
-      return deferred.reject value if !callback
+      if !callback
+        return if type is 'progress'
+        return deferred.reject value
       result = callback value
       if result instanceof Promise
-        result.then deferred.resolve, deferred.reject
+        result.then deferred.resolve, deferred.reject, deferred.progress
       else
         switch type
           when type is "resolve" then deferred.resolve result
@@ -141,7 +146,7 @@ async =
     for item, i in array
       tasks.push(applyFunction item)
 
-    async.parallel(tasks).then deferred.resolve, deferred.reject
+    async.parallel(tasks).then deferred.resolve, deferred.reject, deferred.progress
 
     return deferred.promise
 
@@ -156,7 +161,7 @@ async =
     for item, i in array
       tasks.push(applyFunction item)
 
-    async.series(tasks).then deferred.resolve, deferred.reject
+    async.series(tasks).then deferred.resolve, deferred.reject, deferred.progress
 
     return deferred.promise
 
@@ -171,7 +176,7 @@ async =
     for item, i in array
       tasks.push(applyFunction item)
 
-    async.parallel(tasks).then deferred.resolve, deferred.reject
+    async.parallel(tasks).then deferred.resolve, deferred.reject, deferred.progress
 
     return deferred.promise
 
@@ -186,7 +191,7 @@ async =
     for item, i in array
       tasks.push(applyFunction item)
 
-    async.series(tasks).then deferred.resolve, deferred.reject
+    async.series(tasks).then deferred.resolve, deferred.reject, deferred.progress
 
     return deferred.promise
 
@@ -207,7 +212,7 @@ async =
     for item, i in array
       tasks.push(applyFunction item)
 
-    async.parallel(tasks).then filterResults, deferred.reject
+    async.parallel(tasks).then filterResults, deferred.reject, deferred.progress
 
     return deferred.promise
 
@@ -228,7 +233,7 @@ async =
     for item, i in array
       tasks.push(applyFunction item)
 
-    async.series(tasks).then filterResults, deferred.reject
+    async.series(tasks).then filterResults, deferred.reject, deferred.progress
 
     return deferred.promise
 
@@ -249,7 +254,7 @@ async =
     for item, i in array
       tasks.push(applyFunction item)
 
-    async.parallel(tasks).then filterResults, deferred.reject
+    async.parallel(tasks).then filterResults, deferred.reject, deferred.progress
 
     return deferred.promise
 
@@ -270,7 +275,7 @@ async =
     for item, i in array
       tasks.push(applyFunction item)
 
-    async.series(tasks).then filterResults, deferred.reject
+    async.series(tasks).then filterResults, deferred.reject, deferred.progress
 
     return deferred.promise
 
@@ -287,7 +292,7 @@ async =
       try
         result = func item
         if result instanceof Promise
-          result.then resolveCallback(item), deferred.reject
+          result.then resolveCallback(item), deferred.reject, deferred.progress
         else
           resolveCallback(item) result 
       catch error
@@ -308,7 +313,7 @@ async =
         doStep currentIndex
 
     doStep = (index) ->
-      async.promisify(func array[index]).then resolveCallback, deferred.reject
+      async.promisify(func array[index]).then resolveCallback, deferred.reject, deferred.progress
 
     doStep currentIndex
 
@@ -324,6 +329,7 @@ async =
     resolveCallback = (task) ->
       return (result) ->
         results.push result
+        deferred.progress result
         deferred.resolve results if task is undefined
         return async.promisify task(result)
 
@@ -359,6 +365,7 @@ async =
       return (result) ->
         return if deferred.isFulfilled()
         addResult i, result
+        deferred.progress result
         tasksComplete++
         deferred.resolve(results) if tasksComplete is tasks.length
 
