@@ -138,7 +138,6 @@ errorHandler usage example:
 
 progressHandler usage example:
 
-    // Rejects with the result "fail" after 1000 milliseconds.
     var echoProgress = function () {
         var deferred = async.deferred();
 
